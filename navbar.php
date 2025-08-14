@@ -25,7 +25,7 @@ $is_logged_in = isset($_SESSION['id']) && $_SESSION['id'];
             <div class="nav-menu__section">
                 <a class="nav-menu__link" href="index.php">Начало</a>
                 <a class="nav-menu__link" href="products.php">Продукти</a>
-                <a class="nav-menu__link" href="blog.php">Блог</a>
+                <a class="nav-menu__link" href="blogs.php">Блог</a>
                 <?php if ($is_logged_in): ?>
                     <a class="nav-menu__link" href="favourites.php">Любими</a>
                 <?php endif; ?>
