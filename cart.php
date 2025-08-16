@@ -111,10 +111,20 @@ $total = 0;
                     </form>
                 </div>
             <?php endforeach; ?>
+            <?php if (!empty($cart)): ?>
+    <div class="cart-summary">
+        Общо: <?php echo number_format($total, 2); ?> лв.
+    </div>
+    <div style="text-align: right; margin-top: 20px;">
+        <form action="checkout.php" method="GET">
+            <button type="submit" style="padding: 10px 20px; background-color: #6cbf84; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                Обработи поръчката
+            </button>
+        </form>
+    </div>
+<?php endif; ?>
 
-            <div class="cart-summary">
-                Общо: <?php echo number_format($total, 2); ?> лв.
-            </div>
+
         <?php endif; ?>
     </div>
 </main>

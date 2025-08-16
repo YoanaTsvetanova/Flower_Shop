@@ -4,6 +4,7 @@ include 'config.php';
 
 $is_logged_in = isset($_SESSION['id']) && $_SESSION['id'];
 
+// Validate blog ID
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     echo "Постът не е намерен.";
     exit;
@@ -11,37 +12,33 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
+// Fetch blog
 $query = "SELECT * FROM blogs WHERE id = $id";
 $result = mysqli_query($conn, $query);
-
 if (mysqli_num_rows($result) == 0) {
     echo "Постът не е намерен.";
     exit;
 }
-
 $post = mysqli_fetch_assoc($result);
 
-$message = '';
-if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['item_id']) && $_POST['item_type'] === 'blog') {
-        $blog_id = intval($_POST['item_id']);
+// Handle new comment
+if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text'])) {
+    $comment_text = mysqli_real_escape_string($conn, trim($_POST['comment_text']));
+    if (!empty($comment_text)) {
         $user_id = $_SESSION['id'];
-
-        $check_query = "SELECT * FROM favourites_blogs WHERE user_id = $user_id AND blog_id = $blog_id";
-        $check_result = mysqli_query($conn, $check_query);
-
-        if (mysqli_num_rows($check_result) > 0) {
-            $message = 'Този пост вече е в любими.';
-        } else {
-            $insert_query = "INSERT INTO favourites_blogs (user_id, blog_id, created_at) VALUES ($user_id, $blog_id, NOW())";
-            if (mysqli_query($conn, $insert_query)) {
-                $message = 'Постът беше добавен в любими ❤️';
-            } else {
-                $message = 'Грешка при добавянето. Опитайте отново.';
-            }
-        }
+        $insert = "INSERT INTO comments (user_id, blog_id, comment_text) 
+                   VALUES ($user_id, $id, '$comment_text')";
+        mysqli_query($conn, $insert);
     }
 }
+
+// Fetch comments
+$comments_query = "SELECT c.*, u.username 
+                   FROM comments c 
+                   JOIN users u ON c.user_id = u.id 
+                   WHERE c.blog_id = $id 
+                   ORDER BY c.created_at DESC";
+$comments_result = mysqli_query($conn, $comments_query);
 ?>
 
 <!DOCTYPE html>
@@ -58,54 +55,62 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: var(--cream);
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
         }
-
         .blog-page img {
             width: 100%;
-            max-height: 300px;
+            max-height: 250px;
             object-fit: cover;
             border-radius: 10px;
+            margin-bottom: 20px;
         }
-
         .blog-page h1 {
             color: #c85a6a;
-            font-size: 2rem;
-            margin: 0;
+            margin-bottom: 15px;
         }
-
         .blog-page p {
             font-size: 1.1rem;
             line-height: 1.6;
-            margin: 0;
         }
-
-        .fav-btn {
-            align-self: flex-start;
-            padding: 10px 15px;
-            font-size: 1rem;
-            background-color: var(--light-mint-green);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            text-decoration: none;
-            margin-top: 10px;
+        .comments {
+            margin-top: 40px;
         }
-
-        .fav-btn:hover {
-            background-color: var(--dark-mint-green);
+        .comments h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #333;
         }
-
-        .message {
-            background-color: #d4edda;
-            color: #155724;
+        .comment-form textarea {
+            width: 100%;
+            height: 100px;
             padding: 10px;
             border-radius: 8px;
-            margin-top: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        .comment-form button {
+            padding: 10px 15px;
+            background-color: var(--light-mint-green);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+        }
+        .comment-form button:hover {
+            background-color: var(--dark-mint-green);
+        }
+        .comment {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .comment strong {
+            color: #c85a6a;
+        }
+        .comment small {
+            color: #777;
+            font-size: 0.85rem;
         }
     </style>
 </head>
@@ -119,17 +124,26 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1><?php echo htmlspecialchars($post['title']); ?></h1>
         <p><?php echo nl2br(htmlspecialchars($post['content'])); ?></p>
 
-        <?php if ($is_logged_in): ?>
-            <form action="" method="POST">
-                <input type="hidden" name="item_id" value="<?php echo $post['id']; ?>">
-                <input type="hidden" name="item_type" value="blog">
-                <button type="submit" class="fav-btn">Добави в любими ❤️</button>
-            </form>
-        <?php endif; ?>
+        <div class="comments">
+            <h2>Коментари</h2>
 
-        <?php if (!empty($message)): ?>
-            <p class="message"><?php echo htmlspecialchars($message); ?></p>
-        <?php endif; ?>
+            <?php if ($is_logged_in): ?>
+                <form method="POST" class="comment-form">
+                    <textarea name="comment_text" placeholder="Напишете вашия коментар..." required></textarea>
+                    <button type="submit">Публикувай</button>
+                </form>
+            <?php else: ?>
+                <p>Моля, <a href="login.php">влезте</a>, за да оставите коментар.</p>
+            <?php endif; ?>
+
+            <?php while ($comment = mysqli_fetch_assoc($comments_result)): ?>
+                <div class="comment">
+                    <strong><?php echo htmlspecialchars($comment['username']); ?></strong>
+                    <small> • <?php echo $comment['created_at']; ?></small>
+                    <p><?php echo nl2br(htmlspecialchars($comment['comment_text'])); ?></p>
+                </div>
+            <?php endwhile; ?>
+        </div>
     </div>
 </main>
 
