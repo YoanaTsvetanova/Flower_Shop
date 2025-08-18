@@ -2,13 +2,11 @@
 session_start();
 include 'config.php';
 
-// ✅ Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
 
-// ✅ Fetch user info from the database
 $user_id = $_SESSION['user_id'];
 $stmt = $conn->prepare("SELECT username, full_name, email FROM users WHERE id = ?");
 $stmt->bind_param("i", $user_id);

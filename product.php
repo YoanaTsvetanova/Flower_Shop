@@ -4,7 +4,6 @@ include 'config.php';
 
 $is_logged_in = isset($_SESSION['id']) && $_SESSION['id'];
 
-// Validate product ID
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     echo "Продуктът не е намерен.";
     exit;
@@ -12,7 +11,6 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
-// Fetch product from database
 $query = "SELECT * FROM products WHERE id = $id";
 $result = mysqli_query($conn, $query);
 
@@ -23,7 +21,6 @@ if (mysqli_num_rows($result) == 0) {
 
 $product = mysqli_fetch_assoc($result);
 
-// Handle "Add to favourites" without redirect
 $message = '';
 if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_type'])) {
     if ($_POST['item_type'] === 'product') {
@@ -54,7 +51,6 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item
     <title><?php echo htmlspecialchars($product['name']); ?> - Онлайн Магазин за Цветя</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* PRODUCT SECTION */
         .product-page {
             max-width: 700px;
             margin: 50px auto;
@@ -124,7 +120,6 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item
             margin-top: 10px;
         }
 
-        /* REVIEWS SECTION */
         .reviews-section {
             margin-top: 40px;
             padding-top: 20px;
@@ -207,7 +202,6 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item
             <p class="message"><?php echo htmlspecialchars($message); ?></p>
         <?php endif; ?>
 
-        <!-- REVIEWS -->
         <div class="reviews-section">
             <h2>Отзиви</h2>
 

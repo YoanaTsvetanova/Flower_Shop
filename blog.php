@@ -4,7 +4,7 @@ include 'config.php';
 
 $is_logged_in = isset($_SESSION['id']) && $_SESSION['id'];
 
-// Validate blog ID
+
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     echo "Постът не е намерен.";
     exit;
@@ -12,7 +12,6 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
-// Fetch blog
 $query = "SELECT * FROM blogs WHERE id = $id";
 $result = mysqli_query($conn, $query);
 if (mysqli_num_rows($result) == 0) {
@@ -21,7 +20,6 @@ if (mysqli_num_rows($result) == 0) {
 }
 $post = mysqli_fetch_assoc($result);
 
-// Handle new comment
 if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment_text'])) {
     $comment_text = mysqli_real_escape_string($conn, trim($_POST['comment_text']));
     if (!empty($comment_text)) {
@@ -32,7 +30,7 @@ if ($is_logged_in && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comm
     }
 }
 
-// Fetch comments
+
 $comments_query = "SELECT c.*, u.username 
                    FROM comments c 
                    JOIN users u ON c.user_id = u.id 
